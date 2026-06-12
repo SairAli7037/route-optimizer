@@ -139,4 +139,4 @@ http://127.0.0.1:8000/api/map/
 
 ## Architecture
 
-![Architecture](route_optimizerscreenshots/architecture.png)
+![Architecture](route_optimizer/screenshots/architecture.png)
