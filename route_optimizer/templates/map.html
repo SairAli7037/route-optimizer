@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Spotter Route Optimizer</title>
+
+    <meta charset="utf-8">
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="https://unpkg.com/@mapbox/polyline"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+
+            width: 350px;
+
+            background: #f8f9fa;
+
+            border-right: 1px solid #ddd;
+
+            overflow-y: auto;
+
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+        }
+
+        .summary-card {
+
+            background: white;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            padding: 12px;
+
+            margin-bottom: 15px;
+        }
+
+        .fuel-stop {
+
+            background: white;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            padding: 12px;
+
+            margin-bottom: 12px;
+        }
+
+        #map {
+
+            flex: 1;
+
+            height: 100vh;
+        }
+
+        .price {
+            color: green;
+            font-weight: bold;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="sidebar">
+
+        <h2>Spotter Route Optimizer</h2>
+        <form method="GET">
+
+    <h3>Route Input</h3>
+
+    <label>
+        Start Latitude
+    </label>
+
+    <input
+        type="number"
+        step="any"
+        name="start_lat"
+        value="{{ start.latitude }}"
+        style="width:100%; margin-bottom:10px;"
+    >
+
+    <label>
+        Start Longitude
+    </label>
+
+    <input
+        type="number"
+        step="any"
+        name="start_lng"
+        value="{{ start.longitude }}"
+        style="width:100%; margin-bottom:10px;"
+    >
+
+    <label>
+        End Latitude
+    </label>
+
+    <input
+        type="number"
+        step="any"
+        name="end_lat"
+        value="{{ end.latitude }}"
+        style="width:100%; margin-bottom:10px;"
+    >
+
+    <label>
+        End Longitude
+    </label>
+
+    <input
+        type="number"
+        step="any"
+        name="end_lng"
+        value="{{ end.longitude }}"
+        style="width:100%; margin-bottom:15px;"
+    >
+
+    <button
+        type="submit"
+        style="
+            width:100%;
+            padding:10px;
+            cursor:pointer;
+        "
+    >
+        Optimize Route
+    </button>
+
+</form>
+
+<hr>
+
+        <div class="summary-card">
+
+            <p>
+                <strong>Distance:</strong>
+                {{ distance_miles }} miles
+            </p>
+
+            <p>
+                <strong>Fuel Needed:</strong>
+                {{ fuel_needed_gallons }} gallons
+            </p>
+
+            <p>
+                <strong>Fuel Stops:</strong>
+                {{ fuel_stop_count }}
+            </p>
+
+            <p>
+                <strong>Total Cost:</strong>
+                ${{ total_fuel_cost }}
+            </p>
+
+            <p>
+                <strong>Candidate Stations:</strong>
+                {{ candidate_station_count }}
+            </p>
+
+        </div>
+
+        <h3>Selected Fuel Stops</h3>
+
+        {% for stop in fuel_stops %}
+
+        <div class="fuel-stop">
+
+            <strong>
+                {{ stop.station }}
+            </strong>
+
+            <br>
+
+            {{ stop.city }}
+
+            <br><br>
+
+            <span class="price">
+
+                ${{ stop.price }}
+
+            </span>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    <div id="map"></div>
+
+</div>
+
+<script>
+
+const map = L.map(
+    'map'
+);
+
+
+map.setView(
+    [39.5, -98.35],
+    4
+);
+
+L.tileLayer(
+
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+
+    {
+        attribution:
+        '&copy; OpenStreetMap contributors'
+    }
+
+).addTo(map);
+
+
+// ----------------------
+// Start Marker
+// ----------------------
+
+const startPoint =
+    JSON.parse(
+        '{{ start_json|escapejs }}'
+    );
+
+const endPoint =
+    JSON.parse(
+        '{{ end_json|escapejs }}'
+    );
+
+L.marker(
+    [
+        startPoint.latitude,
+        startPoint.longitude
+    ]
+)
+.addTo(map)
+.bindPopup("Start");
+
+L.marker(
+    [
+        endPoint.latitude,
+        endPoint.longitude
+    ]
+)
+.addTo(map)
+.bindPopup("Destination");
+
+
+// ----------------------
+// Fuel Stops
+// ----------------------
+
+const fuelStops =
+    JSON.parse(
+        '{{ fuel_stops_json|escapejs }}'
+    );
+
+fuelStops.forEach(stop => {
+
+    L.marker(
+        [
+            stop.latitude,
+            stop.longitude
+        ]
+    )
+    .addTo(map)
+    .bindPopup(
+
+        "<b>" +
+        stop.station +
+        "</b><br>" +
+
+        stop.city +
+        "<br>$" +
+
+        stop.price
+
+    );
+
+});
+
+
+// ----------------------
+// Route Polyline
+// ----------------------
+
+const encodedRoute =
+    JSON.parse(
+        '{{ route_geometry_json|escapejs }}'
+    );
+
+const decodedRoute =
+    polyline.decode(
+        encodedRoute
+    );
+console.log(
+    decodedRoute.length
+);
+
+const routeLine =
+    L.polyline(
+        decodedRoute,
+        {
+            weight: 5
+        }
+    ).addTo(map);
+
+
+// // ----------------------
+// // Auto Zoom
+// // ----------------------
+
+map.fitBounds(
+    routeLine.getBounds()
+);
+
+</script>
+
+</body>
+</html>
