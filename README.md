@@ -130,13 +130,13 @@ http://127.0.0.1:8000/api/map/
 ## Screenshots
 ## Route Optimization Result
 
-![Route Map](screenshots/route-map.png)
+![Route Map](route_optimizer/screenshots/route-map.png)
 
 ## Fuel Stops
 
-![Fuel Stops](screenshots/Fuel-stops1.png)
-![Fuel Stops](screenshots/Fuel-stops2.png)
+![Fuel Stops](route_optimizer/screenshots/Fuel-stops1.png)
+![Fuel Stops](route_optimizer/screenshots/Fuel-stops2.png)
 
 ## Architecture
 
-![Architecture](screenshots/architecture.png)
+![Architecture](route_optimizerscreenshots/architecture.png)
