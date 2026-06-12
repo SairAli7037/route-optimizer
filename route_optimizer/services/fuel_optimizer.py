@@ -65,18 +65,34 @@ class FuelOptimizer:
             )
     
             fuel_stops.append(
-                {
-                    "station": cheapest_station.truckstop_name,
-                    "city": cheapest_station.city,
-                    "price": float(
-                        cheapest_station.retail_price
-                    ),
-                    "latitude": cheapest_station.latitude,
-                    "longitude": cheapest_station.longitude,
-                    "distance_miles":
-                        target_mile - current_mile
-                }
-            )
+    {
+        "station":
+            cheapest_station.truckstop_name,
+
+        "city":
+            cheapest_station.city,
+
+        "price":
+            float(
+                cheapest_station.retail_price
+            ),
+
+        "latitude":
+            cheapest_station.latitude,
+
+        "longitude":
+            cheapest_station.longitude,
+        
+        "distance_miles":
+            target_mile - current_mile,
+
+        "window_start":
+            round(current_mile, 0),
+
+        "window_end":
+            round(target_mile, 0)
+    }
+)
     
             current_mile = target_mile
     

@@ -91,63 +91,81 @@
 </head>
 
 <body>
+    <body>
 
 <div class="container">
 
     <div class="sidebar">
 
         <h2>Spotter Route Optimizer</h2>
-        <form method="GET">
+
+        {% if error_message %}
+
+<div
+    style="
+        color:red;
+        margin-bottom:10px;
+        font-weight:bold;
+    "
+>
+    {{ error_message }}
+</div>
+
+{% endif %}
+   <form
+    method="GET"
+    onsubmit="
+        document.getElementById(
+            'form-loading'
+        ).style.display='block';
+    "
+>
 
     <h3>Route Input</h3>
 
     <label>
-        Start Latitude
+        Start City
     </label>
 
     <input
-        type="number"
-        step="any"
-        name="start_lat"
-        value="{{ start.latitude }}"
-        style="width:100%; margin-bottom:10px;"
+        type="text"
+        name="start_city"
+        value="{{ start_city }}"
+        placeholder="New York"
+        style="
+            width:100%;
+            margin-bottom:10px;
+            padding:8px;
+        "
     >
 
     <label>
-        Start Longitude
+        Destination City
     </label>
 
     <input
-        type="number"
-        step="any"
-        name="start_lng"
-        value="{{ start.longitude }}"
-        style="width:100%; margin-bottom:10px;"
+        type="text"
+        name="end_city"
+        value="{{ end_city }}"
+        placeholder="Los Angeles"
+        style="
+            width:100%;
+            margin-bottom:15px;
+            padding:8px;
+        "
     >
 
-    <label>
-        End Latitude
-    </label>
-
-    <input
-        type="number"
-        step="any"
-        name="end_lat"
-        value="{{ end.latitude }}"
-        style="width:100%; margin-bottom:10px;"
-    >
-
-    <label>
-        End Longitude
-    </label>
-
-    <input
-        type="number"
-        step="any"
-        name="end_lng"
-        value="{{ end.longitude }}"
-        style="width:100%; margin-bottom:15px;"
-    >
+    <div
+     id="form-loading"
+     style="
+         display:none;
+         margin-bottom:10px;
+         color:#0066cc;
+         font-weight:bold;
+     "
+ >
+     🔄 Optimizing Route...
+</div>
 
     <button
         type="submit"
@@ -164,58 +182,73 @@
 
 <hr>
 
-        <div class="summary-card">
 
-            <p>
-                <strong>Distance:</strong>
-                {{ distance_miles }} miles
-            </p>
+        <div style="
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+            margin-bottom:20px;
+            ">
 
-            <p>
-                <strong>Fuel Needed:</strong>
-                {{ fuel_needed_gallons }} gallons
-            </p>
+    <div class="summary-card">
+        <h3>{{ distance_miles }}</h3>
+        <small>Miles</small>
+    </div>
 
-            <p>
-                <strong>Fuel Stops:</strong>
-                {{ fuel_stop_count }}
-            </p>
+    <div class="summary-card">
+        <h3>{{ fuel_stop_count }}</h3>
+        <small>Fuel Stops</small>
+    </div>
 
-            <p>
-                <strong>Total Cost:</strong>
-                ${{ total_fuel_cost }}
-            </p>
+    <div class="summary-card">
+        <h3>${{ total_fuel_cost }}</h3>
+        <small>Total Cost</small>
+    </div>
 
-            <p>
-                <strong>Candidate Stations:</strong>
-                {{ candidate_station_count }}
-            </p>
+    <div class="summary-card">
+        <h3>{{ fuel_needed_gallons }}</h3>
+        <small>Gallons</small>
+    </div>
 
-        </div>
+</div>
 
-        <h3>Selected Fuel Stops</h3>
+       <h3> Selected Fuel Stops ({{ fuel_stop_count }})</h3>
 
         {% for stop in fuel_stops %}
 
-        <div class="fuel-stop">
+           <div class="fuel-stop">
 
-            <strong>
-                {{ stop.station }}
-            </strong>
+                <strong>
+                    Fuel Stop #{{ forloop.counter }}
+                </strong>
+            
+                <hr>
+            
+                <strong>
+                    {{ stop.station }}
+                </strong>
+            
+                <br>
+            
+                {{ stop.city }}
+            
+                <br><br>
+            
+                <span class="price">
+                    ${{ stop.price }}
+                </span>
+            
+                <br><br>
 
-            <br>
-
-            {{ stop.city }}
-
-            <br><br>
-
-            <span class="price">
-
-                ${{ stop.price }}
-
-            </span>
-
-        </div>
+                <small>
+                    Reachable Window:
+                    {{ stop.window_start }}
+                    -
+                    {{ stop.window_end }}
+                    miles
+                </small>
+            
+            </div>
 
         {% endfor %}
 
@@ -291,26 +324,18 @@ const fuelStops =
         '{{ fuel_stops_json|escapejs }}'
     );
 
-fuelStops.forEach(stop => {
+fuelStops.forEach((stop, index) => {
 
-    L.marker(
-        [
-            stop.latitude,
-            stop.longitude
-        ]
-    )
+    L.marker([
+        stop.latitude,
+        stop.longitude
+    ])
     .addTo(map)
     .bindPopup(
-
-        "<b>" +
-        stop.station +
-        "</b><br>" +
-
-        stop.city +
-        "<br>$" +
-
-        stop.price
-
+        `<b>Fuel Stop #${index + 1}</b><br><br>
+        ${stop.station}<br>
+        ${stop.city}<br>
+        $${stop.price}`
     );
 
 });
